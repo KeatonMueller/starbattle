@@ -7,9 +7,10 @@ def get_dimensions(img):
     '''
     determine the dimensions of the given image
 
-    return location of grid boundaries, as well as
-    the dimensions of an individual box, in the form
-    (top, left, bottom, right, width, height)
+    return location of grid boundaries, the dimensions
+    of an individual box, and the border thickness in
+    the form
+    (top, left, bottom, right, width, height, thickness)
     '''
     # find width
     left, right = 0, img.shape[1] - 1
@@ -33,8 +34,14 @@ def get_dimensions(img):
 
     height = round((bottom - top) / game.GRID_SIZE)
 
+    # determine thickness of outer border
+    thickness = left
+    while img[row][thickness][0] == 0:
+        thickness += 1
+    thickness -= left
+
     # return data
-    return top, left, bottom, right, width, height
+    return top, left, bottom, right, width, height, thickness
 
 def extract_grid_lines(img_path):
     '''
@@ -73,13 +80,15 @@ def extract_grid_lines(img_path):
     img_final_bin = cv2.addWeighted(img_lines_vert, 0.5, img_lines_horiz, 0.5, 0.0)
     img_final_bin = cv2.erode(~img_final_bin, kernel_ones, iterations=1)
     thresh, img_final_bin = cv2.threshold(img_final_bin, 128, 255, cv2.THRESH_BINARY)
-    cv2.imwrite('img_final_bin.jpg', img_final_bin)
+    # cv2.imwrite('img_final_bin.jpg', img_final_bin)
     
     return img_final_bin
 
-def detect_line(img, coord0, coord1_start, coord1_end, dir='horiz'):
+def detect_line(img, coord0, coord1_start, coord1_end, thickness, dir='horiz'):
     '''
     detect if there's a line in the image between the given coordinates
+
+    detected line must be within 10% of the thickness value to be registered
 
     dir dictates the direction the changing coordinate moves in
 
@@ -90,12 +99,30 @@ def detect_line(img, coord0, coord1_start, coord1_end, dir='horiz'):
     for coord1 in range(coord1_start, coord1_end):
         # if dir is horiz, coord1 controls the column
         if dir == 'horiz':
+            # found a black line
             if img[coord0][coord1][0] == 0:
-                return True
+                # determine its thickness
+                size = coord1
+                while img[coord0][size][0] == 0:
+                    size += 1
+                size -= coord1
+                # check if it's within threshold
+                if size * 1.1 >= thickness:
+                    return True
+                return False
         # if dir is vert, coord1 controls the row
         elif dir == 'vert':
+            # found a black line
             if img[coord1][coord0][0] == 0:
-                return True
+                # determine its thickness
+                size = coord1
+                while img[size][coord0][0] == 0:
+                    size += 1
+                size -= coord1
+                # check if it's within threshold
+                if size * 1.1 >= thickness:
+                    return True
+                return False
     return False
 
 def detect_walls(img):
@@ -105,7 +132,7 @@ def detect_walls(img):
     if no wall is found, record adjacent boxes as neighbors
     '''
     # get dimensions from the extracted line data
-    top, left, bottom, right, width, height = get_dimensions(img)
+    top, left, bottom, right, width, height, thickness = get_dimensions(img)
 
     # note: grids automatically have walls everywhere
     grid = game.Grid()
@@ -118,11 +145,11 @@ def detect_walls(img):
             col_px = round(left + (col * width) + (width / 2))
             
             # if not last col, check if there's a wall to the right 
-            if col < game.GRID_SIZE - 1 and not detect_line(img, row_px, col_px, col_px + width, 'horiz'):
+            if col < game.GRID_SIZE - 1 and not detect_line(img, row_px, col_px, col_px + width, thickness, 'horiz'):
                 grid.join_right(row, col)
 
             # if not last row, check if there's a wall to the bottom 
-            if row < game.GRID_SIZE - 1 and not detect_line(img, col_px, row_px, row_px + height, 'vert'):
+            if row < game.GRID_SIZE - 1 and not detect_line(img, col_px, row_px, row_px + height, thickness, 'vert'):
                 grid.join_down(row, col)
 
     # return the grid
@@ -166,5 +193,5 @@ def read_img(img_path):
     img = extract_grid_lines(img_path)
     grid = detect_walls(img)
     label_regions(grid)
-    print(grid)
     
+    return grid
