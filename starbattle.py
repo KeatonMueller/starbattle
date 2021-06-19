@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser(description = 'run star battle solver')
 parser.add_argument('-f', '--file', type=str, default='grid.png', help='file path of image to analyze')
 parser.add_argument('-d', '--dimension', type=int, default=10, help='dimension of the grid')
 parser.add_argument('-s', '--stars', type=int, default=2, help='number of stars')
+parser.add_argument('--debug', action='store_true', default=False, help='run in debug mode')
 
 args = parser.parse_args()
 
@@ -18,7 +19,7 @@ game.GRID_SIZE = args.dimension
 game.STAR_COUNT = args.stars
 
 # read the image and attempt a solve
-grid = read_img(args.file)
+grid = read_img(args.file, args.debug)
 
 print('extracted the following grid:')
 print(grid)
