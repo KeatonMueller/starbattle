@@ -1,7 +1,18 @@
 import cv2
 import numpy as np
+from math import ceil
 
 import game
+
+def get_color(img, x, y):
+    '''
+    get the color from the image at the given pixel location
+
+    rgb values are averaged, then converted to 0 or 255
+    '''
+    if sum(img[x][y]) / 3 >= 128:
+        return 255
+    return 0
 
 def get_dimensions(img):
     '''
@@ -16,9 +27,9 @@ def get_dimensions(img):
     left, right = 0, img.shape[1] - 1
     row = img.shape[0] // 2
     
-    while img[row][left][0] == 255:
+    while get_color(img, row, left) == 255:
         left += 1
-    while img[row][right][0] == 255:
+    while get_color(img, row, right) == 255:
         right -= 1
 
     width = round((right - left) / game.GRID_SIZE)
@@ -27,16 +38,17 @@ def get_dimensions(img):
     top, bottom = 0, img.shape[0] - 1
     col = img.shape[1] // 2
 
-    while img[top][col][0] == 255:
+    while get_color(img, top, col) == 255:
         top += 1
-    while img[bottom][col][0] == 255:
+    while get_color(img, bottom, col) == 255:
         bottom -=1
 
     height = round((bottom - top) / game.GRID_SIZE)
 
     # determine thickness of outer border
     thickness = left
-    while img[row][thickness][0] == 0:
+    row = top + (height // 2)
+    while get_color(img, row, thickness) == 0:
         thickness += 1
     thickness -= left
 
@@ -92,7 +104,7 @@ def detect_line(img, coord0, coord1_start, coord1_end, thickness, dir='horiz'):
 
     dir dictates the direction the changing coordinate moves in
 
-    i.e. 'horiz' means coord1 is moving horizontally, 'vert' means
+    e.g. 'horiz' means coord1 is moving horizontally, 'vert' means
     coord1 is moving vertically
     '''
     # loop through given range
@@ -100,27 +112,27 @@ def detect_line(img, coord0, coord1_start, coord1_end, thickness, dir='horiz'):
         # if dir is horiz, coord1 controls the column
         if dir == 'horiz':
             # found a black line
-            if img[coord0][coord1][0] == 0:
+            if get_color(img, coord0, coord1) == 0:
                 # determine its thickness
                 size = coord1
-                while img[coord0][size][0] == 0:
+                while get_color(img, coord0, size) == 0:
                     size += 1
                 size -= coord1
                 # check if it's within threshold
-                if size * 1.1 >= thickness:
+                if ceil(size * 1.1) >= thickness:
                     return True
                 return False
         # if dir is vert, coord1 controls the row
         elif dir == 'vert':
             # found a black line
-            if img[coord1][coord0][0] == 0:
+            if get_color(img, coord1, coord0) == 0:
                 # determine its thickness
                 size = coord1
-                while img[size][coord0][0] == 0:
+                while get_color(img, size, coord0) == 0:
                     size += 1
                 size -= coord1
                 # check if it's within threshold
-                if size * 1.1 >= thickness:
+                if ceil(size * 1.1) >= thickness:
                     return True
                 return False
     return False
@@ -134,7 +146,7 @@ def detect_walls(img):
     # get dimensions from the extracted line data
     top, left, bottom, right, width, height, thickness = get_dimensions(img)
 
-    # note: grids automatically have walls everywhere
+    # note: grid automatically has walls everywhere, so they only need to be removed
     grid = game.Grid()
 
     # loop over all boxes
@@ -189,6 +201,8 @@ def read_img(img_path):
     '''
     read in the raw image located at img_path and extract grid lines,
     detect walls, and label the regions
+
+    return the Grid object corresponding to the image
     '''
     img = extract_grid_lines(img_path)
     grid = detect_walls(img)
