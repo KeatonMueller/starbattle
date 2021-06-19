@@ -2,8 +2,14 @@
 
 This is a project to solve the game of Star Battle.
 
-The project uses the OpenCV python module to analyze an image of a star
-battle game and then output a solution.
+The rules of Star Battle are quite simple. In each row, column, and region
+of an NxN grid, you must place a specified number of stars. In addition, no
+star may be adjacent to any other, even diagonally.
+
+The game is most often played on a 10x10 grid with 2 stars per row/column/region.
+
+This project is written in Python and uses OpenCV to analyze an image of a Star
+Battle game and output a solution.
 
 ## How to use it
 
@@ -11,7 +17,7 @@ To use the program, run:
 
 `python starbattle.py -f [FILENAME]`
 
-where `FILENAME` is a path to an image of a star battle puzzle.
+where `FILENAME` is a path to an image of a Star Battle puzzle.
 
 A sample image is included in the repo named `grid.png` which is the first
 level from [this](https://krazydad.com/tablet/starbattle/) website.
