@@ -36,7 +36,7 @@ for more information.
 This program finds a solution using simple recursive backtracking.
 
 However, since a standard game is 10x10 with 20 total stars, the number of ways
-to place the stars is 100 choose 20, which is on the order of 10^20.
+to place the stars is 100 choose 20, which is on the order of 10<sup>20</sup>.
 
 This is too large a search space to explore in a reasonable amount of time, so
 some basic optimizations were made using the standard rules of Star Battle.
