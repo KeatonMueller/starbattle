@@ -52,4 +52,4 @@ to find solutions for easy games in a few seconds, and for harder games it takes
 about 10-20 seconds.
 
 The program generalizes to bigger board sizes with more stars, but it may be
-prohibitively slow in this situations.
+prohibitively slow in those situations.
